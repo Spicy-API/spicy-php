@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor matches the require in composer.json. Testing only the newest release would
+        # leave problems for users on 8.1 to discover themselves - and 8.1 is exactly what this
+        # package claims to support.
+        php-version: ["8.1", "8.3", "8.4"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: json, hash, curl
+          coverage: none
+      - name: Syntax
+        run: find src tests examples -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Tests
+        run: php tests/run.php
+      - name: Contract drift
+        # Compares against the public contract and needs no credentials - this repository is
+        # public and must not hold a token that can read a private one.
+        run: php scripts/check_contract.php

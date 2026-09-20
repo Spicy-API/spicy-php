@@ -1,0 +1,8 @@
+/vendor/
+composer.lock
+
+# Runtime artefacts of the loopback suite: router.php rewrites these on every run.
+# They are not code, and committing them would leave the tree dirty after every test run.
+tests/srv/flaky.count
+tests/srv/received.bin
+tests/srv/received-headers.json
